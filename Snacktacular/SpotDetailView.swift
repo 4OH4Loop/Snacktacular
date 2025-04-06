@@ -6,8 +6,11 @@
 //
 
 import SwiftUI
+import Firebase
+import FirebaseFirestore
 
 struct SpotDetailView: View {
+    @FirestoreQuery(collectionPath: "spots") var photos: [Photo]
     @State var spot: Spot // pass in value from ListView
     @State private var photoSheetIsPresented = false
     @State private var showingAlert = false // Alert user if they need to save Spot before adding a photo
@@ -46,9 +49,30 @@ struct SpotDetailView: View {
             .buttonStyle(.borderedProminent)
             .tint(.snack)
             
+            ScrollView(.horizontal) {
+                HStack {
+                    ForEach(photos) { photo in
+                            let url = URL(string: photo.imageURLString)
+                            AsyncImage(url: url) { image in
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 80, height: 80)
+                                    .clipped()
+                            } placeholder: {
+                                ProgressView()
+                            }
+                        }
+                }
+            }
+            .frame(height: 80)
+            
             Spacer()
         }
         .navigationBarBackButtonHidden()
+        .task {
+            $photos.path = "spots/\(spot.id ?? "")/photos"
+        }
         
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -98,6 +122,6 @@ struct SpotDetailView: View {
 
 #Preview {
     NavigationStack {
-        SpotDetailView(spot: Spot())
+        SpotDetailView(spot: Spot(id: "1", name: "Boston Public Makret", address: "Boston, MA"))
     }
 }
